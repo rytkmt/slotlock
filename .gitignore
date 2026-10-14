@@ -1,0 +1,4 @@
+/slotlock
+*.db
+*.db-wal
+*.db-shm

@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# slotlock-herdr — slotlock の herdr 向けラッパー
+#
+# key を herdr のワークスペースID ($HERDR_WORKSPACE_ID) で自動的に埋めて
+# `slotlock run` を呼ぶ。これにより「herdr ワークスペースごとに安定したスロット番号」が
+# 得られる。slotlock 本体は herdr を知らず、この薄いラッパーだけが herdr に依存する。
+#
+# 使い方:
+#   slotlock-herdr --scope rspec [--max N] [--ttl D] -- <command...>
+#
+#   --scope は必須。--key は指定しない（$HERDR_WORKSPACE_ID で自動設定する）。
+#   その他のフラグ・-- 以降のコマンドは slotlock にそのまま渡す。
+#
+# 環境変数:
+#   HERDR_WORKSPACE_ID  key として使う。未設定ならエラー。
+#   SLOTLOCK_KEY        明示的に key を上書きしたい場合に指定（主に非herdr環境での検証用）。
+
+set -eu
+
+key="${SLOTLOCK_KEY:-${HERDR_WORKSPACE_ID:-}}"
+if [ -z "$key" ]; then
+  echo "slotlock-herdr: HERDR_WORKSPACE_ID is not set (are you inside a herdr workspace?)." >&2
+  echo "               set SLOTLOCK_KEY to override, or run inside herdr." >&2
+  exit 2
+fi
+
+exec slotlock run --key "$key" "$@"
