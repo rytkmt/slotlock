@@ -33,14 +33,6 @@ curl -fsSL "$BASE/slotlock-herdr"  -o ~/.local/bin/slotlock-herdr
 chmod +x ~/.local/bin/slotlock ~/.local/bin/slotlock-herdr
 ```
 
-`gh` CLI がある場合は次でもよい:
-
-```sh
-gh release download v0.1.0 --repo rytkmt/slotlock \
-  --pattern slotlock --pattern slotlock-herdr --dir ~/.local/bin
-chmod +x ~/.local/bin/slotlock ~/.local/bin/slotlock-herdr
-```
-
 ### ソースからビルド
 
 ```sh
