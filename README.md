@@ -23,7 +23,17 @@
 ## インストール
 
 [GitHub Release](https://github.com/rytkmt/slotlock/releases) に linux/amd64 の
-`slotlock` バイナリと `slotlock-herdr` スクリプトを添付している。`gh` で取得できる。
+`slotlock` バイナリと `slotlock-herdr` スクリプトを添付している。public な
+Release なので認証不要でダウンロードできる。
+
+```sh
+BASE=https://github.com/rytkmt/slotlock/releases/download/v0.1.0
+curl -fsSL "$BASE/slotlock"        -o ~/.local/bin/slotlock
+curl -fsSL "$BASE/slotlock-herdr"  -o ~/.local/bin/slotlock-herdr
+chmod +x ~/.local/bin/slotlock ~/.local/bin/slotlock-herdr
+```
+
+`gh` CLI がある場合は次でもよい:
 
 ```sh
 gh release download v0.1.0 --repo rytkmt/slotlock \
