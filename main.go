@@ -38,6 +38,8 @@ func main() {
 		os.Exit(cmdRun(os.Args[2:]))
 	case "list":
 		os.Exit(cmdList(os.Args[2:]))
+	case "get":
+		os.Exit(cmdGet(os.Args[2:]))
 	case "release":
 		os.Exit(cmdRelease(os.Args[2:]))
 	case "help", "-h", "--help":
@@ -248,6 +250,38 @@ func cmdList(argv []string) int {
 			a.Scope, a.SlotNumber, a.Key, a.LastUsedAt.Format(time.RFC3339), age)
 	}
 	w.Flush()
+	return 0
+}
+
+func cmdGet(argv []string) int {
+	opt, err := parseFlags(argv)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock get:", err)
+		return 2
+	}
+	if opt.scope == "" || opt.key == "" {
+		fmt.Fprintln(os.Stderr, "slotlock get: --scope and --key are required")
+		return 2
+	}
+	st, err := store.Open(opt.dbt)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock:", err)
+		return 1
+	}
+	defer st.Close()
+
+	slot, ok, err := st.Get(opt.scope, opt.key)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock:", err)
+		return 1
+	}
+	if !ok {
+		// 未割り当ては stdout に何も出さず非ゼロ終了（スクリプトから判定しやすい）。
+		fmt.Fprintf(os.Stderr, "slotlock: no slot assigned for scope=%q key=%q\n", opt.scope, opt.key)
+		return 1
+	}
+	// 番号だけを 1 行 stdout に出す（n=$(slotlock get ...) で受けられる）。
+	fmt.Println(slot)
 	return 0
 }
 

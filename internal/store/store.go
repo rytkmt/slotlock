@@ -203,6 +203,23 @@ func (s *Store) Release(scope, key string) (bool, error) {
 	return n > 0, nil
 }
 
+// Get は (scope, key) に割り当て済みの slot 番号を返す（参照のみ。last_used_at は
+// 更新しない）。割り当てが無ければ ok=false を返す。
+func (s *Store) Get(scope, key string) (slot int, ok bool, err error) {
+	err = s.db.QueryRow(
+		`SELECT slot_number FROM slot_assignments WHERE scope = ? AND key = ?`,
+		scope, key,
+	).Scan(&slot)
+	switch {
+	case err == nil:
+		return slot, true, nil
+	case errors.Is(err, sql.ErrNoRows):
+		return 0, false, nil
+	default:
+		return 0, false, err
+	}
+}
+
 // List は割り当て一覧を返す。scope が空なら全件。
 func (s *Store) List(scope string) ([]Assignment, error) {
 	var (

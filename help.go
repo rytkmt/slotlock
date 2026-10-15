@@ -62,6 +62,11 @@ COMMANDS
   slotlock list    [--scope S] [--db PATH]
       Show current assignments (scope, slot, key, last used, age).
 
+  slotlock get     --scope S --key K [--db PATH]
+      Print the slot number currently assigned to (S, K) to stdout (one line).
+      Read-only: it does NOT assign a new slot, take a lock, or update last-used.
+      Exit 0 if assigned; exit 1 (no stdout) if not assigned.
+
   slotlock release --scope S --key K [--db PATH]
       Forget the assignment for (S, K). Does not affect a running command.
 
