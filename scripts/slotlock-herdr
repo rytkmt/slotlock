@@ -2,22 +2,42 @@
 #
 # slotlock-herdr — slotlock の herdr 向けラッパー
 #
-# key を herdr のワークスペースID ($HERDR_WORKSPACE_ID) で自動的に埋めて
-# `slotlock run` を呼ぶ。これにより「herdr ワークスペースごとに安定したスロット番号」が
-# 得られる。slotlock 本体は herdr を知らず、この薄いラッパーだけが herdr に依存する。
+# key を herdr のワークスペースID ($HERDR_WORKSPACE_ID) で自動的に埋めて slotlock を
+# 呼ぶ。これにより「herdr ワークスペースごとに安定したスロット番号」が得られる。
+# slotlock 本体は herdr を知らず、この薄いラッパーだけが herdr に依存する。
 #
-# 使い方:
-#   slotlock-herdr --scope rspec [--max N] [--ttl D] -- <command...>
+# 任意のサブコマンドに対応する（run / get / release / list / help）。
+#   slotlock-herdr <subcommand> [args...]
+#     -> key を要するサブコマンド(run/get/release)は <subcommand> の直後に --key を挿入
+#     -> key を使わないサブコマンド(list/help 等)は --key を付けずそのまま渡す
 #
-#   --scope は必須。--key は指定しない（$HERDR_WORKSPACE_ID で自動設定する）。
-#   その他のフラグ・-- 以降のコマンドは slotlock にそのまま渡す。
+# 使い方の例:
+#   slotlock-herdr run --scope rspec --min 2 --max 8 -- <command...>
+#   slotlock-herdr get --scope rspec
+#   slotlock-herdr list
 #
 # 環境変数:
-#   HERDR_WORKSPACE_ID  key として使う。未設定ならエラー。
+#   HERDR_WORKSPACE_ID  key として使う。未設定ならエラー（key を要するサブコマンド時）。
 #   SLOTLOCK_KEY        明示的に key を上書きしたい場合に指定（主に非herdr環境での検証用）。
 
 set -eu
 
+if [ "$#" -eq 0 ]; then
+  echo "slotlock-herdr: a subcommand is required (run / get / release / list / help)." >&2
+  exit 2
+fi
+
+sub="$1"
+shift
+
+case "$sub" in
+  list | help | -h | --help)
+    # key を使わないサブコマンドはそのまま素通し。
+    exec slotlock "$sub" "$@"
+    ;;
+esac
+
+# ここから下は key を要するサブコマンド (run / get / release / 未知のもの)。
 key="${SLOTLOCK_KEY:-${HERDR_WORKSPACE_ID:-}}"
 if [ -z "$key" ]; then
   echo "slotlock-herdr: HERDR_WORKSPACE_ID is not set (are you inside a herdr workspace?)." >&2
@@ -25,4 +45,5 @@ if [ -z "$key" ]; then
   exit 2
 fi
 
-exec slotlock run --key "$key" "$@"
+# サブコマンドの直後に --key を挿入する（run の '--' より確実に前に置くため）。
+exec slotlock "$sub" --key "$key" "$@"

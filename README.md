@@ -130,8 +130,12 @@ CGO_ENABLED=0 go build -o slotlock .
 herdr に依存します。
 
 ```sh
-slotlock-herdr --scope rspec --min 2 --max 8 -- <command...>
-# 中身: slotlock run --key "$HERDR_WORKSPACE_ID" --scope rspec --min 2 --max 8 -- <command...>
+# 第1引数にサブコマンドを渡す。key を要する run/get/release は --key が自動補完される。
+slotlock-herdr run --scope rspec --min 2 --max 8 -- <command...>
+slotlock-herdr get --scope rspec
+slotlock-herdr list        # list/help は key を使わないのでそのまま素通し
+
+# run の中身: slotlock run --key "$HERDR_WORKSPACE_ID" --scope rspec ... -- <command...>
 ```
 
 ## リリース（開発者向け）
