@@ -163,5 +163,6 @@ slotlock-herdr list        # list/help は key を使わないのでそのまま
 バイナリをビルドし、`slotlock-herdr` と一緒に Release に添付します。
 
 ```sh
-git tag v0.2.0 && git push origin v0.2.0
+# <version> は次に出すバージョン（例: vX.Y.Z）。既存タグと重複しない値にする。
+git tag <version> && git push origin <version>
 ```
