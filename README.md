@@ -60,6 +60,7 @@ DB の食い合いを防ぎます。
 | コマンド | 役割 |
 | --- | --- |
 | `slotlock run --scope S --key K [--min M] [--max N] -- CMD...` | スロットを確保し `SLOT_NUMBER` を入れて CMD を実行 |
+| `slotlock acquire --scope S --key K [--min M] [--max N]` | スロットを確保（永続割り当て）して番号を1行出力。flock は掴まず CMD も実行しない |
 | `slotlock get --scope S --key K` | いま (S,K) に割り当たっている番号を1行だけ出力（参照のみ） |
 | `slotlock list [--scope S]` | 割り当て状況を一覧表示 |
 | `slotlock release --scope S --key K` | (S,K) の割り当てを手動で解放 |
@@ -70,6 +71,15 @@ DB の食い合いを防ぎます。
 
 ```sh
 n=$(slotlock get --scope rspec --key myjob) && echo "現在の番号: $n"
+```
+
+`acquire` は `get` と似ていますが、**未割り当てなら新しく番号を確保して永続化する**点が
+違います（`get` は参照のみで、無ければ exit 1）。`run` と違い flock は掴まず、コマンドも
+実行しません。番号だけ先に決めておきたい（例: その番号のテストDBを事前に作っておく）
+ときに使います。同時実行の排他は行わないので、二重起動を防ぎたい場合は `run` を使います。
+
+```sh
+n=$(slotlock acquire --scope rspec --key myjob --min 2 --max 8) && echo "確保した番号: $n"
 ```
 
 ## 番号の割り当てルール
@@ -100,10 +110,19 @@ n=$(slotlock get --scope rspec --key myjob) && echo "現在の番号: $n"
 Release なので認証不要でダウンロードできます。
 
 ```sh
-BASE=https://github.com/rytkmt/slotlock/releases/download/v0.1.0
+BASE=https://github.com/rytkmt/slotlock/releases/latest/download
 curl -fsSL "$BASE/slotlock"        -o ~/.local/bin/slotlock
 curl -fsSL "$BASE/slotlock-herdr"  -o ~/.local/bin/slotlock-herdr
 chmod +x ~/.local/bin/slotlock ~/.local/bin/slotlock-herdr
+```
+
+`latest/download` は常に最新リリースへ解決されるので、新しいバージョンが出ても
+この手順を書き換える必要はありません。バージョンを固定したい場合（CI など再現性が
+必要なとき）は `latest` の代わりにタグを指定します。
+
+```sh
+VERSION=v0.3.0
+BASE=https://github.com/rytkmt/slotlock/releases/download/$VERSION
 ```
 
 ### ソースからビルド

@@ -36,6 +36,8 @@ func main() {
 	switch os.Args[1] {
 	case "run":
 		os.Exit(cmdRun(os.Args[2:]))
+	case "acquire":
+		os.Exit(cmdAcquire(os.Args[2:]))
 	case "list":
 		os.Exit(cmdList(os.Args[2:]))
 	case "get":
@@ -250,6 +252,55 @@ func cmdList(argv []string) int {
 			a.Scope, a.SlotNumber, a.Key, a.LastUsedAt.Format(time.RFC3339), age)
 	}
 	w.Flush()
+	return 0
+}
+
+// cmdAcquire は (scope, key) に slot 番号を確保（永続割り当て）し、番号だけを stdout に
+// 1 行出す。run と違い flock は掴まない（同時実行の排他は行わない）。未割り当てなら新規に
+// 確保し、既にあればその番号を再利用する点が get（参照のみ）との違い。
+func cmdAcquire(argv []string) int {
+	opt, err := parseFlags(argv)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock acquire:", err)
+		return 2
+	}
+	if opt.scope == "" || opt.key == "" {
+		fmt.Fprintln(os.Stderr, "slotlock acquire: --scope and --key are required")
+		return 2
+	}
+	if opt.max < 1 {
+		fmt.Fprintln(os.Stderr, "slotlock acquire: --max must be >= 1")
+		return 2
+	}
+	if opt.min < 1 {
+		fmt.Fprintln(os.Stderr, "slotlock acquire: --min must be >= 1")
+		return 2
+	}
+	if opt.min > opt.max {
+		fmt.Fprintln(os.Stderr, "slotlock acquire: --min must be <= --max")
+		return 2
+	}
+
+	st, err := store.Open(opt.dbt)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock:", err)
+		return 1
+	}
+	defer st.Close()
+
+	slot, err := st.Acquire(opt.scope, opt.key, opt.min, opt.max, opt.ttl, time.Now())
+	if err == store.ErrNoSlotAvailable {
+		fmt.Fprintf(os.Stderr,
+			"slotlock: no slot available in scope %q (range %d..%d). all slots are assigned and in use within TTL.\n",
+			opt.scope, opt.min, opt.max)
+		return 1
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock:", err)
+		return 1
+	}
+	// 番号だけを 1 行 stdout に出す（n=$(slotlock acquire ...) で受けられる）。
+	fmt.Println(slot)
 	return 0
 }
 

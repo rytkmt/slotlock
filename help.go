@@ -59,6 +59,16 @@ COMMANDS
                running, or an internal error
         2    : usage error (bad flags / missing args)
 
+  slotlock acquire --scope S --key K [--min M] [--max N] [--ttl D] [--db PATH]
+      Reserve (and persist) a slot for (S, K) and print it to stdout (one line).
+      Unlike run, it does NOT take a concurrency lock (flock) and does NOT exec a
+      command: it only assigns the number. Unlike get, it CREATES a new assignment
+      when none exists. If (S, K) already has a slot, that number is returned and
+      its last-used time is refreshed.
+      Use this to decide a key's number ahead of time (e.g. to pre-create the
+      numbered resource) without running anything yet.
+      Exit 0 on success; exit 1 if no slot is available (all taken within TTL).
+
   slotlock list    [--scope S] [--db PATH]
       Show current assignments (scope, slot, key, last used, age).
 
@@ -91,6 +101,9 @@ EXAMPLES
 
   # Inspect assignments.
   slotlock list --scope rspec
+
+  # Reserve a number up front without running anything (no concurrency lock).
+  n=$(slotlock acquire --scope rspec --key "$HERDR_WORKSPACE_ID" --max 8)
 
   # Manually release one.
   slotlock release --scope rspec --key w7T
