@@ -80,12 +80,19 @@ COMMANDS
   slotlock release --scope S --key K [--db PATH]
       Forget the assignment for (S, K). Does not affect a running command.
 
+  slotlock force-release --scope S --slot N [--db PATH]
+      Forget the assignment occupying slot N in scope S, identified by NUMBER
+      instead of key. Recovery tool for when you no longer know the key (look up
+      the number with 'slotlock list'). Does not affect a running command and does
+      not touch the flock (a running process keeps its lock until it exits).
+
   slotlock help
       Show this help.
 
 FLAGS
   --scope S   Namespace for slot numbering. Different scopes number independently.
   --key   K   Identifier that owns a slot within the scope. Same key => same slot.
+  --slot  N   Slot NUMBER to force-release (used only by force-release).
   --min   M   Lowest slot number. Default 1. Use this to reserve low numbers
               (e.g. --min 2 to keep slot 1 for an unnumbered/default resource).
   --max   N   Highest slot number (slots are M..N). Default 8.
@@ -107,6 +114,9 @@ EXAMPLES
 
   # Manually release one.
   slotlock release --scope rspec --key w7T
+
+  # Force-release by number when the key is unknown (find it via list).
+  slotlock force-release --scope rspec --slot 3
 
 NOTES
   - slotlock itself knows nothing about herdr or rspec. Callers pass --scope/--key.

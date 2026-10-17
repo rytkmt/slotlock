@@ -6,6 +6,13 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-17
+
+### Added
+
+- `force-release` サブコマンドを追加。`--scope S --slot N` で番号を指定して割り当てを
+  強制解放する。key がわからなくなったときの復旧用（`release` は key 指定）
+
 ### Changed
 
 - README のリリース手順のタグ例を `<version>` プレースホルダ表記に変更
@@ -46,7 +53,8 @@
 - `slotlock-herdr` ラッパースクリプト
 - `v*` タグ push でバイナリをビルドし Release に添付する GitHub Actions ワークフロー
 
-[Unreleased]: https://github.com/rytkmt/slotlock/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/rytkmt/slotlock/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rytkmt/slotlock/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/rytkmt/slotlock/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/rytkmt/slotlock/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rytkmt/slotlock/compare/v0.1.0...v0.2.0

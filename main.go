@@ -44,6 +44,8 @@ func main() {
 		os.Exit(cmdGet(os.Args[2:]))
 	case "release":
 		os.Exit(cmdRelease(os.Args[2:]))
+	case "force-release":
+		os.Exit(cmdForceRelease(os.Args[2:]))
 	case "help", "-h", "--help":
 		usage(os.Stdout)
 		os.Exit(0)
@@ -58,6 +60,7 @@ func main() {
 type options struct {
 	scope string
 	key   string
+	slot  *int // --slot（force-release 用。未指定は nil）
 	min   int
 	max   int
 	ttl   time.Duration
@@ -88,6 +91,14 @@ func parseFlags(argv []string) (options, error) {
 			opt.scope, err = next()
 		case "--key":
 			opt.key, err = next()
+		case "--slot":
+			var v string
+			if v, err = next(); err == nil {
+				var n int
+				if n, err = strconv.Atoi(v); err == nil {
+					opt.slot = &n
+				}
+			}
 		case "--max":
 			var v string
 			if v, err = next(); err == nil {
@@ -362,6 +373,39 @@ func cmdRelease(argv []string) int {
 		fmt.Printf("released scope=%q key=%q\n", opt.scope, opt.key)
 	} else {
 		fmt.Printf("no assignment for scope=%q key=%q\n", opt.scope, opt.key)
+	}
+	return 0
+}
+
+// cmdForceRelease は (scope, slot) を指定して割り当てを削除する。key がわからなくなった
+// 場合の復旧用。release と違い key ではなく番号で指定する（排他や同時実行制御は行わない。
+// flock は対象外で、従来どおりプロセス終了時に自動解放される）。
+func cmdForceRelease(argv []string) int {
+	opt, err := parseFlags(argv)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock force-release:", err)
+		return 2
+	}
+	if opt.scope == "" || opt.slot == nil {
+		fmt.Fprintln(os.Stderr, "slotlock force-release: --scope and --slot are required")
+		return 2
+	}
+	st, err := store.Open(opt.dbt)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock:", err)
+		return 1
+	}
+	defer st.Close()
+
+	ok, err := st.ReleaseBySlot(opt.scope, *opt.slot)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "slotlock:", err)
+		return 1
+	}
+	if ok {
+		fmt.Printf("released scope=%q slot=%d\n", opt.scope, *opt.slot)
+	} else {
+		fmt.Printf("no assignment for scope=%q slot=%d\n", opt.scope, *opt.slot)
 	}
 	return 0
 }

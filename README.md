@@ -64,6 +64,7 @@ DB の食い合いを防ぎます。
 | `slotlock get --scope S --key K` | いま (S,K) に割り当たっている番号を1行だけ出力（参照のみ） |
 | `slotlock list [--scope S]` | 割り当て状況を一覧表示 |
 | `slotlock release --scope S --key K` | (S,K) の割り当てを手動で解放 |
+| `slotlock force-release --scope S --slot N` | key がわからないとき、番号 N を指定して (S,N) の割り当てを強制解放 |
 | `slotlock help` | 詳細ヘルプ（AI 向けの解説も含む） |
 
 `get` は番号だけを標準出力に出すので、スクリプトから受け取れます（割り当てが

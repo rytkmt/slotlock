@@ -203,6 +203,20 @@ func (s *Store) Release(scope, key string) (bool, error) {
 	return n > 0, nil
 }
 
+// ReleaseBySlot は (scope, slot_number) の割り当てを削除する。key がわからなくなった
+// 場合の復旧用（force-release）。削除できたら ok=true。
+func (s *Store) ReleaseBySlot(scope string, slot int) (bool, error) {
+	res, err := s.db.Exec(
+		`DELETE FROM slot_assignments WHERE scope = ? AND slot_number = ?`,
+		scope, slot,
+	)
+	if err != nil {
+		return false, err
+	}
+	n, _ := res.RowsAffected()
+	return n > 0, nil
+}
+
 // Get は (scope, key) に割り当て済みの slot 番号を返す（参照のみ。last_used_at は
 // 更新しない）。割り当てが無ければ ok=false を返す。
 func (s *Store) Get(scope, key string) (slot int, ok bool, err error) {
